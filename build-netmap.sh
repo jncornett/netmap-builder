@@ -63,13 +63,12 @@ initimage() {
 
 # acquire the source if it doesn't exist yet
 acquiresource() {
-  local ref="$1" srcdir
+  local ref="$1" tmpdir="$2" srcdir
   if [[ -d "$ref" ]]; then
     # ref is a source directory, no need to do anything
     srcdir="$ref"
   else
     # need to download source from github
-    local tmpdir=$(mktemp -d -p '')
     (
       cd $tmpdir
       wget -q -O - https://github.com/$GH_USER/$GH_REPO/archive/${ref}.tar.gz | \
@@ -93,8 +92,8 @@ buildmodule() {
 
 extractmodule() {
   local container="$1" output="$2"
-  docker cp "${container}:/out/netmap.ko" "${output}"
-  ls -d "${output}/netmap.ko"
+  docker cp "${container}:/out" "${output}"
+  ls -d "${output}/out/netmap.ko"
 }
 
 main() {
@@ -119,9 +118,12 @@ main() {
   info initializing docker image "(name: $IMAGE_NAME)"
   initimage "$IMAGE_NAME" || die "failed to initialize docker image"
 
+  local tmpdir=$(mktemp -d -p '')
+  (( $? == 0 )) || die "failed to create a temporary directory"
+
   local srcdir
   info acquiring source "(ref: $netmap)"
-  srcdir=$(acquiresource "$netmap")
+  srcdir=$(acquiresource "$netmap" "$tmpdir")
   (( $? == 0 )) || die "failed to locate/acquire netmap source"
   debug "source is at ${srcdir}"
 
