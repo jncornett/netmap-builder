@@ -53,10 +53,10 @@ help() {
 
 # build the docker image if not built yet
 # FIXME this requires the script to be run from the root dir
-initimage() {
+initbuildimage() {
   local imagename="$1"
   (
-    cd ./docker
+    cd ./docker/builder
     docker build -t $imagename .
   )
 }
@@ -116,7 +116,7 @@ main() {
 
   summarize "$kernel" "$netmap" "${output}/netmap.ko"
   info initializing docker image "(name: $IMAGE_NAME)"
-  initimage "$IMAGE_NAME" || die "failed to initialize docker image"
+  initbuildimage "$IMAGE_NAME" || die "failed to initialize docker image"
 
   local tmpdir=$(mktemp -d -p '')
   (( $? == 0 )) || die "failed to create a temporary directory"
